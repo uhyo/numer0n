@@ -37,6 +37,27 @@ var Numer0nState = (function () {
             }, []);
         }
     };
+    Numer0nState.prototype.filter = function (call, obj) {
+        var _this = this;
+        this.alives = this.alives.filter(function (option) {
+            var reca = _this.calculateCall(call, option);
+            return obj.eat === reca.eat && obj.bite === reca.bite;
+        });
+    };
+    Numer0nState.prototype.calculateCall = function (call, option) {
+        var result = {
+            eat: 0,
+            bite: 0
+        };
+        for(var i = 0, l = call.length; i < l; i++) {
+            if(call[i] === option[i]) {
+                result.eat++;
+            } else if(option.indexOf(call[i]) >= 0) {
+                result.bite++;
+            }
+        }
+        return result;
+    };
     return Numer0nState;
 })();
 exports.Numer0nState = Numer0nState;
