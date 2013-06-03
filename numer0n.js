@@ -113,6 +113,9 @@ var Numer0nAI = (function () {
             });
         }
     };
+    Numer0nAI.prototype.callResult = function (call, obj) {
+        this.state.filter(call, obj);
+    };
     Numer0nAI.prototype.shuffleArray = function (arr) {
         var result = [];
         var cp = arr.concat([]);

@@ -101,6 +101,9 @@ export class Numer0nAI{
 			});
 		}
 	}
+	callResult(call:string,obj:Call):void{
+		this.state.filter(call,obj);
+	}
 	private shuffleArray(arr:any[]):any[]{
 		var result=[];
 		var cp=arr.concat([]);
