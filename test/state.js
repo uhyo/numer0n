@@ -2,6 +2,7 @@ var should=require("should");
 var numer0n=require("../numer0n");
 
 var Numer0nState=numer0n.Numer0nState;
+var Numer0nAI=numer0n.Numer0nAI;
 describe("Numer0nState",function(){
 	describe("constructor",function(){
 		it("initializes correctly",function(){
@@ -38,6 +39,15 @@ describe("Numer0nState",function(){
 			});
 			state.alives.should.include("012");
 			state.alives.should.have.length(1);
+		});
+	});
+});
+describe("Numer0nAI",function(){
+	describe("basic decision",function(){
+		it("checks mate",function(){
+			var ai=new Numer0nAI(3,["0","1","2","3"]);
+			ai.state.alives=["230"];
+			ai.makeCall().should.be.eql("230");
 		});
 	});
 });
