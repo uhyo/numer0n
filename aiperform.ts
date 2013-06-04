@@ -1,3 +1,4 @@
+/* not compatible */
 import numer0n=module("numer0n");
 
 /* node things*/
@@ -13,7 +14,8 @@ var rl=readline.createInterface({
 });
 
 rl.question("Decide 3 digits. Don't tell me!! Press Enter:",(answer)=>{
-	var ai=new numer0n.Numer0nAI(3);
+	//dummy
+	var ai=new numer0n.Numer0nGame.Attacker(3,["0","1","2","3","4","5","6","7","8","9"]);
 	nextDecide();
 
 	function nextDecide():void{
@@ -35,9 +37,9 @@ rl.question("Decide 3 digits. Don't tell me!! Press Enter:",(answer)=>{
 					ask();
 					return;
 				}
-				ai.callResult(call,new numer0n.Call(eat,bite));
+				ai.callResult(call,new numer0n.CallResult(eat,bite));
 				if(eat===3 && bite===0){
-					rl.write("Ai says: YES!!\n");
+					rl.write("AI says: YES!!\n");
 					rl.close();
 					return;
 				}
