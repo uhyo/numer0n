@@ -269,6 +269,47 @@ exports.Numer0nState = Numer0nState;
         return Defender;
     })();
     Numer0nGame.Defender = Defender;    
+    var Human = (function (_super) {
+        __extends(Human, _super);
+        function Human(field, name) {
+                _super.call(this, field, name);
+            this.field = field;
+            this.name = name;
+            this.ui = new UserInterface();
+        }
+        Human.prototype.makeCall = function (callback) {
+            this.ui.question("Make your call:", callback);
+        };
+        Human.prototype.gotCallResult = function (call, result) {
+        };
+        Human.prototype.gotCall = function (call, callback) {
+            this.ui.question("Enter EAT then BITE ex)3 0 :", function (str) {
+                var aas = str.split(/\s/);
+                callback(new CallResult(parseInt(aas[0]), parseInt(aas[1])));
+            });
+        };
+        return Human;
+    })(Player);
+    Numer0nGame.Human = Human;    
+    var UserInterface = (function () {
+        function UserInterface() {
+            var readline = require('readline');
+            this.inte = readline.createInterface({
+                input: process.stdin,
+                output: process.stdout
+            });
+            this.inte.pause();
+        }
+        UserInterface.prototype.question = function (q, callback) {
+            var _this = this;
+            this.inte.question(q, function (result) {
+                _this.inte.pause();
+                callback(result);
+            });
+        };
+        return UserInterface;
+    })();
+    Numer0nGame.UserInterface = UserInterface;    
 })(exports.Numer0nGame || (exports.Numer0nGame = {}));
 var Numer0nGame = exports.Numer0nGame;
 function shuffleArray(arr) {

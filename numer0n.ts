@@ -55,6 +55,7 @@ export class Numer0nState{
 
 }
 export module Numer0nGame{
+	declare var require:any, process:any;
 	//場
 	export class Field{
 		private players:Player[]=[];
@@ -239,6 +240,44 @@ export module Numer0nGame{
 			var result=this.state.calculateCall(call,this.myNumber);
 			this.state.filter(call,result);
 			return result;
+		}
+	}
+	//人
+	//What!? No defence!
+	export class Human extends Player{
+		private ui:UserInterface;
+		constructor(private field:Field,public name:string){
+			super(field,name);
+			this.ui=new UserInterface;	//抽象的インターフェース
+		}
+		makeCall(callback:(call:string)=>void):void{
+			this.ui.question("Make your call:",callback);
+		}
+		gotCallResult(call:string,result:CallResult):void{
+		}
+		gotCall(call:string,callback:(result:CallResult)=>void):void{
+			this.ui.question("Enter EAT then BITE ex)3 0 :",(str:string)=>{
+				var aas=str.split(/\s/);
+				callback(new CallResult(parseInt(aas[0]),parseInt(aas[1])));
+			});
+		}
+	}
+	export class UserInterface{
+		//node的実装
+		private inte:any;
+		constructor(){
+			var readline=require('readline');
+			this.inte=readline.createInterface({
+				input:process.stdin,
+				output:process.stdout,
+			});
+			this.inte.pause();
+		}
+		question(q:string,callback:(result:string)=>void):void{
+			this.inte.question(q,(result:string)=>{
+				this.inte.pause();
+				callback(result);
+			});
 		}
 	}
 }
