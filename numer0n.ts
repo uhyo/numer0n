@@ -1,3 +1,6 @@
+export interface Strategy{
+	hasteMakesWaste?:bool;	//E3B0のない手を許す
+}
 export class CallResult{
 	constructor(public eat:number,public bite:number){
 	}
@@ -60,7 +63,7 @@ export module Numer0nGame{
 	export class Field{
 		private players:Player[]=[];
 		private turn:number;
-		private endCallback:()=>void;
+		private endCallback:(turn:number,player:Player)=>void;
 		constructor(public digitsnumber:number,public digits?:string[]=["0","1","2","3","4","5","6","7","8","9"]){
 		}
 		addPlayer(player:Player):void{
@@ -71,7 +74,7 @@ export module Numer0nGame{
 			throw new Error("Too much players");
 		}
 		//ゲーム開始
-		setCallback(endc:()=>void):void{
+		setCallback(endc:(winindex:number,player:Player)=>void):void{
 			this.endCallback=endc;
 		}
 		start(turn?:number=0):void{
@@ -94,7 +97,7 @@ export module Numer0nGame{
 					//次のターンへ
 					if(result.eat===3 && result.bite===0){
 						//勝敗決した
-						if(this.endCallback)this.endCallback();
+						if(this.endCallback)this.endCallback(turn,turnPlayer);
 						return;
 					}
 					this.turn=oppt;
@@ -111,6 +114,14 @@ export module Numer0nGame{
 				throw new Error("Unknown message");
 			}
 			console.log(player.name+" says: "+message);
+		}
+	}
+	//しずかだ
+	export class SilentField extends Field{
+		constructor(digitsnumber:number,digits?:string[]){
+			super(digitsnumber,digits);
+		}
+		say(player:Player,message:string):void{
 		}
 	}
 	//プレイヤー
@@ -135,10 +146,13 @@ export module Numer0nGame{
 	export class AI extends Player{
 		private attacker:Attacker;
 		private defender:Defender;
-		constructor(private field:Field,public name:string){
+		constructor(private field:Field,public name:string,private strategy?:Strategy){
 			super(field,name);
-			this.attacker=new Attacker(field.digitsnumber,field.digits);
-			this.defender=new Defender(field.digitsnumber,field.digits);
+			if(strategy==null){
+				this.strategy=strategy={};
+			}
+			this.attacker=new Attacker(field.digitsnumber,field.digits,strategy);
+			this.defender=new Defender(field.digitsnumber,field.digits,strategy);
 			this.defender.setNumber();
 		}
 		makeCall(callback:(call:string)=>void):void{
@@ -161,7 +175,7 @@ export module Numer0nGame{
 	//相手の数字をあてたりする
 	export class Attacker{
 		private state:Numer0nState;
-		constructor(private digitsnumber:number,private digits:string[]){
+		constructor(private digitsnumber:number,private digits:string[],private strategy:Strategy){
 			this.state=new Numer0nState(digitsnumber,digits);
 		}
 		makeCall():string{
@@ -174,8 +188,7 @@ export module Numer0nGame{
 			var remcl=<{
 				[index:number]:number;
 			}>{};
-			//var fops=st.makeFullOptions();
-			var fops=st.alives;
+			var fops= this.strategy.hasteMakesWaste ? st.makeFullOptions() : st.alives;
 			fops.forEach((call:string)=>{
 				//選択肢を検討する
 				var resultCollections=<{
@@ -214,7 +227,7 @@ export module Numer0nGame{
 	export class Defender{
 		private state:Numer0nState;
 		private myNumber:string;	//自分の数字
-		constructor(private digitsnumber:number,private digits:string[]){
+		constructor(private digitsnumber:number,private digits:string[],private strategy:Strategy){
 			this.state=new Numer0nState(digitsnumber,digits);
 		}
 		setNumber(num?:string):void{
@@ -287,7 +300,8 @@ function shuffleArray(arr:any[]):any[]{
 	var len=cp.length, nextidx=0;
 	while(len>0){
 		var index=Math.floor(Math.random()*len);
-		result[nextidx]=arr[index];
+		result[nextidx]=cp[index];
+		cp.splice(index,1);
 		nextidx++,len--;
 	}
 	return result;

@@ -126,7 +126,7 @@ exports.Numer0nState = Numer0nState;
                     turnPlayer.gotCallResult(call, result);
                     if(result.eat === 3 && result.bite === 0) {
                         if(_this.endCallback) {
-                            _this.endCallback();
+                            _this.endCallback(turn, turnPlayer);
                         }
                         return;
                     }
@@ -146,6 +146,16 @@ exports.Numer0nState = Numer0nState;
         return Field;
     })();
     Numer0nGame.Field = Field;    
+    var SilentField = (function (_super) {
+        __extends(SilentField, _super);
+        function SilentField(digitsnumber, digits) {
+                _super.call(this, digitsnumber, digits);
+        }
+        SilentField.prototype.say = function (player, message) {
+        };
+        return SilentField;
+    })(Field);
+    Numer0nGame.SilentField = SilentField;    
     var Player = (function () {
         function Player(field, name) {
             this.field = field;
@@ -165,12 +175,17 @@ exports.Numer0nState = Numer0nState;
     Numer0nGame.Player = Player;    
     var AI = (function (_super) {
         __extends(AI, _super);
-        function AI(field, name) {
+        function AI(field, name, strategy) {
                 _super.call(this, field, name);
             this.field = field;
             this.name = name;
-            this.attacker = new Attacker(field.digitsnumber, field.digits);
-            this.defender = new Defender(field.digitsnumber, field.digits);
+            this.strategy = strategy;
+            if(strategy == null) {
+                this.strategy = strategy = {
+                };
+            }
+            this.attacker = new Attacker(field.digitsnumber, field.digits, strategy);
+            this.defender = new Defender(field.digitsnumber, field.digits, strategy);
             this.defender.setNumber();
         }
         AI.prototype.makeCall = function (callback) {
@@ -193,9 +208,10 @@ exports.Numer0nState = Numer0nState;
     })(Player);
     Numer0nGame.AI = AI;    
     var Attacker = (function () {
-        function Attacker(digitsnumber, digits) {
+        function Attacker(digitsnumber, digits, strategy) {
             this.digitsnumber = digitsnumber;
             this.digits = digits;
+            this.strategy = strategy;
             this.state = new Numer0nState(digitsnumber, digits);
         }
         Attacker.prototype.makeCall = function () {
@@ -205,7 +221,7 @@ exports.Numer0nState = Numer0nState;
             }
             var remcl = {
             };
-            var fops = st.alives;
+            var fops = this.strategy.hasteMakesWaste ? st.makeFullOptions() : st.alives;
             fops.forEach(function (call) {
                 var resultCollections = {
                 };
@@ -240,9 +256,10 @@ exports.Numer0nState = Numer0nState;
     })();
     Numer0nGame.Attacker = Attacker;    
     var Defender = (function () {
-        function Defender(digitsnumber, digits) {
+        function Defender(digitsnumber, digits, strategy) {
             this.digitsnumber = digitsnumber;
             this.digits = digits;
+            this.strategy = strategy;
             this.state = new Numer0nState(digitsnumber, digits);
         }
         Defender.prototype.setNumber = function (num) {
@@ -318,7 +335,8 @@ function shuffleArray(arr) {
     var len = cp.length, nextidx = 0;
     while(len > 0) {
         var index = Math.floor(Math.random() * len);
-        result[nextidx] = arr[index];
+        result[nextidx] = cp[index];
+        cp.splice(index, 1);
         nextidx++ , len--;
     }
     return result;
