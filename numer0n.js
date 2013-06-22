@@ -14,6 +14,19 @@ var CallResult = (function () {
     return CallResult;
 })();
 exports.CallResult = CallResult;
+var Item = (function () {
+    function Item(type, argument) {
+        this.type = null;
+        this.argument = null;
+        this.result = null;
+        this.type = type;
+        if(argument) {
+            this.argument = argument;
+        }
+    }
+    return Item;
+})();
+exports.Item = Item;
 var Numer0nState = (function () {
     function Numer0nState(digitsnumber, digits) {
         if (typeof digits === "undefined") { digits = [
@@ -30,6 +43,20 @@ var Numer0nState = (function () {
         ]; }
         this.digitsnumber = digitsnumber;
         this.digits = digits;
+        this.low = [
+            "0", 
+            "1", 
+            "2", 
+            "3", 
+            "4"
+        ];
+        this.high = [
+            "5", 
+            "6", 
+            "7", 
+            "8", 
+            "9"
+        ];
         this.initialize();
     }
     Numer0nState.prototype.initialize = function () {
@@ -73,6 +100,109 @@ var Numer0nState = (function () {
             }
         }
         return result;
+    };
+    Numer0nState.prototype.attackItem = function (item) {
+        var _this = this;
+        if(item.type === "HIGH&LOW") {
+            var r = item.result, l = r.length;
+            this.alives = this.alives.filter(function (option) {
+                for(var i = 0; i < l; i++) {
+                    if(r[i] === "H") {
+                        if(_this.high.indexOf(option[i]) === -1) {
+                            return false;
+                        }
+                    } else if(r[i] === "L") {
+                        if(_this.low.indexOf(option[i]) === -1) {
+                            return false;
+                        }
+                    } else {
+                        throw new Error("gwaaaaa");
+                    }
+                }
+                return true;
+            });
+        } else if(item.type === "TARGET") {
+            if(item.result === "NO") {
+                this.alives = this.alives.filter(function (option) {
+                    for(var i = 0, l = option.length; i < l; i++) {
+                        if(option[i] === item.argument) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+            } else {
+                var kt = parseInt(item.result) - 1;
+                this.alives = this.alives.filter(function (option) {
+                    return option[kt] === item.argument;
+                });
+            }
+        } else if(item.type === "SLASH") {
+            var slash = parseInt(item.result) - 0;
+            this.alives = this.alives.filter(function (option) {
+                var numarr = option.split("").map(function (str) {
+                    return parseInt(str);
+                });
+                var sl = Math.max.apply(Math, numarr) - Math.min.apply(Math, numarr);
+                return slash === sl;
+            });
+        }
+    };
+    Numer0nState.prototype.defenceItem = function (item) {
+        if(item.type === "SHUFFLE") {
+            var news = [];
+            this.alives.forEach(function (option) {
+                news = news.concat(allPatterns(option));
+                function allPatterns(option) {
+                    if(option.length <= 1) {
+                        return [
+                            option
+                        ];
+                    }
+                    var result = [];
+                    for(var i = 0, l = option.length; i < l; i++) {
+                        var took = option.slice(0, i) + option.slice(i + 1);
+                        result = result.concat(allPatterns(took).map(function (pat) {
+                            return option[i] + pat;
+                        }));
+                    }
+                    return result;
+                }
+            });
+            this.alives = this.unique(news);
+        } else if(item.type === "CHANGE") {
+            var koh = item.argument[1] === "H" ? this.high : this.low;
+            var news = [], kt = item.argument[0] - 1;
+            this.alives.forEach(function (option) {
+                if(koh.indexOf(option[kt]) === -1) {
+                } else {
+                    koh.forEach(function (dig) {
+                        var br;
+                        if(dig === option[kt]) {
+                            return;
+                        }
+                        br = option.slice(0, kt) + " " + option.slice(kt + 1);
+                        if(br.indexOf(dig) >= 0) {
+                            return;
+                        }
+                        br = option.slice(0, kt) + dig + option.slice(kt + 1);
+                        news.push(br);
+                    });
+                }
+            });
+            this.alives = this.unique(news);
+        }
+    };
+    Numer0nState.prototype.unique = function (arr) {
+        var obj = {
+        };
+        return arr.filter(function (str) {
+            if(obj[str]) {
+                return false;
+            }
+            obj[str] = true;
+            return true;
+        });
     };
     return Numer0nState;
 })();
@@ -251,6 +381,9 @@ exports.Numer0nState = Numer0nState;
         };
         Attacker.prototype.callResult = function (call, obj) {
             this.state.filter(call, obj);
+        };
+        Attacker.prototype.itemResult = function (item) {
+            this.state.attackItem(item);
         };
         return Attacker;
     })();

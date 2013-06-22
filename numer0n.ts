@@ -8,7 +8,21 @@ export class CallResult{
 		return "E"+this.eat+"B"+this.bite;
 	}
 }
+//アイテム
+export class Item{
+	type:string=null;	//6種類?
+	argument:string=null;	//追加情報
+	result:string=null;	//結果
+	constructor(type,argument?){
+		this.type=type;
+		if(argument){
+			this.argument=argument;
+		}
+	}
+}
 export class Numer0nState{
+	private low:string[]=["0","1","2","3","4"];
+	private high:string[]=["5","6","7","8","9"];
 	public alives:string[];	//まだ生き残っている数値
 	constructor(private digitsnumber:number,private digits:string[]=["0","1","2","3","4","5","6","7","8","9"]){
 		this.initialize();
@@ -54,6 +68,106 @@ export class Numer0nState{
 			}
 		}
 		return result;
+	}
+	//アイテム結果
+	attackItem(item:Item):void{
+		if(item.type==="HIGH&LOW"){
+			//item.result: "HLH"とか
+			var r=item.result, l=r.length;
+			this.alives=this.alives.filter((option:string)=>{
+				for(var i=0;i<l;i++){
+					if(r[i]==="H"){
+						if(this.high.indexOf(option[i])===-1)return false;
+					}else if(r[i]==="L"){
+						if(this.low.indexOf(option[i])===-1)return false;
+					}else{
+						throw new Error("gwaaaaa");
+					}
+				}
+				return true;
+			});
+		}else if(item.type==="TARGET"){
+			//item.argument:きいた数字(1つ)
+			//item.result: 桁（左から1,2,...）または"NO"
+			if(item.result==="NO"){
+				this.alives=this.alives.filter((option:string)=>{
+					for(var i=0,l=option.length;i<l;i++){
+						if(option[i]===item.argument)return false;
+					}
+					return true;
+				});
+			}else{
+				var kt=parseInt(item.result)-1;
+				this.alives=this.alives.filter((option:string)=>{
+					return option[kt]===item.argument;
+				});
+			}
+		}else if(item.type==="SLASH"){
+			//item.result:スラッシュナンバー
+			var slash=parseInt(item.result)-0;
+			this.alives=this.alives.filter((option:string)=>{
+				var numarr=option.split("").map((str)=>{return parseInt(str);});
+				var sl=Math.max.apply(Math,numarr)-Math.min.apply(Math,numarr);
+				return slash===sl;
+			});
+		}
+	}
+	defenceItem(item:Item):void{
+		//ディフェンスアイテムを使った場合
+		if(item.type==="SHUFFLE"){
+			var news=[];
+			this.alives.forEach((option:string)=>{
+				news=news.concat(allPatterns(option));
+
+				function allPatterns(option:string):string[]{
+					if(option.length<=1)return [option];
+					var result=[];
+					for(var i=0,l=option.length;i<l;i++){
+						var took=option.slice(0,i)+option.slice(i+1);
+						result=result.concat(allPatterns(took).map((pat)=>{
+							return option[i]+pat;
+						}));
+					}
+					return result;
+				}
+			});
+			this.alives=this.unique(news);
+		}else if(item.type==="CHANGE"){
+			//item.argument: 桁→ H/L ex)2H
+			var koh = item.argument[1]==="H" ? this.high : this.low;
+			var news=[], kt=item.argument[0]-1;
+			this.alives.forEach((option:string)=>{
+				if(koh.indexOf(option[kt])===-1){
+					//これは候補じゃない
+					//news.push(option);
+				}else{
+					//変わる
+					koh.forEach((dig)=>{
+						var br;
+						if(dig===option[kt])return;	//同じにはならない
+						//いったん空白に
+						br=option.slice(0,kt)+" "+option.slice(kt+1);
+						if(br.indexOf(dig)>=0){
+							//入れたら2重になる!だめ
+							return;
+						}
+						br=option.slice(0,kt)+dig+option.slice(kt+1);
+						news.push(br);
+					});
+				}
+			});
+			this.alives=this.unique(news);
+		}
+	}
+	private unique(arr:string[]):string[]{
+		var obj=<{[index:string]:bool;}>{};
+		return arr.filter((str)=>{
+			if(obj[str]){
+				return false;
+			}
+			obj[str]=true;
+			return true;
+		});
 	}
 
 }
@@ -222,6 +336,9 @@ export module Numer0nGame{
 		}
 		callResult(call:string,obj:CallResult):void{
 			this.state.filter(call,obj);
+		}
+		itemResult(item:Item):void{
+			this.state.attackItem(item);
 		}
 	}
 	export class Defender{
